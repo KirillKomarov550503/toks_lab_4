@@ -94,43 +94,55 @@ namespace WindowsFormsApplication1
         private void DataReceived(object sender, SerialDataReceivedEventArgs e)
         {
             int size = serialPort.BytesToRead;
-            if (size > 0)
+            byte[] bytes = new byte[size];
+            serialPort.Read(bytes, 0, bytes.Length);
+            byte receiveByte  =0;
+            foreach (byte bt in bytes)
             {
-                byte[] bytes = new byte[size];
-                serialPort.Read(bytes, 0, bytes.Length);
-                if (bytes[0] == 0x08)
+                receiveByte = bt;
+            }
+            Console.Write(Encoding.ASCII.GetString(new byte[] { receiveByte }) + "(" + receiveByte + ")" + "|");
+            if (receiveByte == 0x08)
+            {
+                collisionCount++;
+                this.Invoke((MethodInvoker)(delegate
                 {
-                    collisionCount++;
-                    this.Invoke((MethodInvoker)(delegate
-                    {
-                        textBox2.Text += "X";
-                    }));
-                }
-                else if (bytes[0] == 0x0A)
-                {
-                    this.Invoke((MethodInvoker)(delegate
-                    {
-                        textBox1.Text += receivedMessage + "\r\n";
-                        receivedMessage = "";
-                    }));
-                }
-                else
-                {
-                    collisionCount = 0;
-                    string temp = Encoding.ASCII.GetString(bytes);
-                    this.Invoke((MethodInvoker)(delegate
-                    {
-                        receivedMessage += temp;
-                        textBox2.Text += "\r\n" + temp;
-                    }));
-                }
+                    if (collisionCount == 1)
+                        textBox2.Text += "\r\n";
+                    textBox2.Text += "X";
+                }));
                 if (collisionCount == 10)
                 {
+                    receivedMessage = "";
                     this.Invoke((MethodInvoker)(delegate
                     {
                         textBox2.Text += "Program received message with too much amount of collision\r\n";
+                        textBox2.Text += "_______________________________\r\n";
+                        Console.WriteLine();
                     }));
                 }
+
+            }
+            else if (receiveByte == 0x0A)
+            {
+                collisionCount = 0;
+                this.Invoke((MethodInvoker)(delegate
+                {
+                    textBox1.Text += receivedMessage + "\r\n";
+                    textBox2.Text += "___________________________\r\n";
+                    receivedMessage = "";
+                    Console.WriteLine();
+                }));
+            }
+            else
+            {
+                collisionCount = 0;
+                string temp = Encoding.ASCII.GetString(new byte[] { receiveByte });
+                this.Invoke((MethodInvoker)(delegate
+                {
+                    receivedMessage += temp;
+                    textBox2.Text += "\r\n" + temp;
+                }));
             }
 
         }
@@ -139,19 +151,17 @@ namespace WindowsFormsApplication1
         {
             thread.Abort();
         }
-        private static bool IsFree()
-        {
-            return ((Int32)(DateTime.UtcNow.Subtract(new DateTime(1970, 1, 1))).TotalSeconds % 2) == 0;
-        }
 
-        private static bool IsCollise()
+        private static bool Random()
         {
-            return ((Int32)(DateTime.UtcNow.Subtract(new DateTime(1970, 1, 1))).TotalSeconds % 2) == 0;
+            return new Random().Next(11) > 4;
         }
 
         private static void Delay(int tryNumber)
         {
-            Thread.Sleep(new Random().Next((int)Math.Pow(2.0, (double)tryNumber)) * 10);
+            int times = tryNumber < 5 ? 30 : 10;
+            Thread.Sleep(new Random().Next((int)Math.Pow(2.0, (double)tryNumber)) * times);
+
         }
 
         private void button2_Click(object sender, EventArgs e)
@@ -160,7 +170,7 @@ namespace WindowsFormsApplication1
             {
                 if (serialPort.IsOpen)
                 {
-                    if (IsFree())
+                    if (Random())
                     {
                         textBox2.Text += "Channel is free" + "\r\n";
                     }
@@ -177,7 +187,7 @@ namespace WindowsFormsApplication1
                     {
                         for (int i = 0; i < 10; i++)
                         {
-                            if (IsCollise())
+                            if (Random())
                             {
                                 serialPort.Write(new byte[] { 0x08 }, 0, 1);
                                 textBox2.Text += "X";
@@ -193,18 +203,20 @@ namespace WindowsFormsApplication1
                         }
                         if (!limit)
                         {
-                            textBox2.Text += Encoding.ASCII.GetString(new byte[] { bt }) + "\r\n";
-                            serialPort.Write(new byte[] { bt }, 0, 1);
-                            Thread.Sleep(100);
+                            byte[] temp = new byte[] { bt };
+                            textBox2.Text += Encoding.ASCII.GetString(temp) + "\r\n";
+                            serialPort.Write(temp, 0, 1);
+                            Thread.Sleep(50);
                         }
                         else
                         {
                             textBox2.Text += " Program try to send symbol \"" + Encoding.ASCII.GetString(new byte[] { bt }) + "\" 10 times\r\n";
+                            limit = false;
                             return;
                         }
                     }
                     serialPort.Write(new byte[] { 0x0A }, 0, 1);
-                    Thread.Sleep(100);
+                    Thread.Sleep(50);
                     serialPort.RtsEnable = false;
                 }
                 else
