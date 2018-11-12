@@ -101,7 +101,7 @@ namespace WindowsFormsApplication1
             {
                 receiveByte = bt;
             }
-            Console.Write(Encoding.ASCII.GetString(new byte[] { receiveByte }) + "(" + receiveByte + ")" + "|");
+            
             if (receiveByte == 0x08)
             {
                 collisionCount++;
@@ -118,7 +118,7 @@ namespace WindowsFormsApplication1
                     {
                         textBox2.Text += "Program received message with too much amount of collision\r\n";
                         textBox2.Text += "_______________________________\r\n";
-                        Console.WriteLine();
+                       
                     }));
                 }
 
@@ -131,7 +131,7 @@ namespace WindowsFormsApplication1
                     textBox1.Text += receivedMessage + "\r\n";
                     textBox2.Text += "___________________________\r\n";
                     receivedMessage = "";
-                    Console.WriteLine();
+                    
                 }));
             }
             else
