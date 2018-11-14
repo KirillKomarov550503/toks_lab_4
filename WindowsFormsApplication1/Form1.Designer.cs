@@ -36,16 +36,15 @@
             this.label3 = new System.Windows.Forms.Label();
             this.button1 = new System.Windows.Forms.Button();
             this.button2 = new System.Windows.Forms.Button();
-            this.comboBox1 = new System.Windows.Forms.ComboBox();
             this.SuspendLayout();
             // 
             // textBox1
             // 
-            this.textBox1.Location = new System.Drawing.Point(12, 37);
+            this.textBox1.Location = new System.Drawing.Point(19, 37);
             this.textBox1.Multiline = true;
             this.textBox1.Name = "textBox1";
             this.textBox1.ReadOnly = true;
-            this.textBox1.Size = new System.Drawing.Size(461, 259);
+            this.textBox1.Size = new System.Drawing.Size(454, 422);
             this.textBox1.TabIndex = 0;
             // 
             // textBox2
@@ -54,7 +53,7 @@
             this.textBox2.Multiline = true;
             this.textBox2.Name = "textBox2";
             this.textBox2.ReadOnly = true;
-            this.textBox2.Size = new System.Drawing.Size(459, 258);
+            this.textBox2.Size = new System.Drawing.Size(459, 421);
             this.textBox2.TabIndex = 1;
             // 
             // label1
@@ -77,16 +76,15 @@
             // 
             // textBox3
             // 
-            this.textBox3.Location = new System.Drawing.Point(16, 344);
-            this.textBox3.Multiline = true;
+            this.textBox3.Location = new System.Drawing.Point(19, 493);
             this.textBox3.Name = "textBox3";
-            this.textBox3.Size = new System.Drawing.Size(457, 180);
+            this.textBox3.Size = new System.Drawing.Size(457, 22);
             this.textBox3.TabIndex = 4;
             // 
             // label3
             // 
             this.label3.AutoSize = true;
-            this.label3.Location = new System.Drawing.Point(16, 321);
+            this.label3.Location = new System.Drawing.Point(16, 473);
             this.label3.Name = "label3";
             this.label3.Size = new System.Drawing.Size(43, 17);
             this.label3.TabIndex = 5;
@@ -112,21 +110,11 @@
             this.button2.UseVisualStyleBackColor = true;
             this.button2.Click += new System.EventHandler(this.button2_Click);
             // 
-            // comboBox1
-            // 
-            this.comboBox1.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
-            this.comboBox1.FormattingEnabled = true;
-            this.comboBox1.Location = new System.Drawing.Point(698, 420);
-            this.comboBox1.Name = "comboBox1";
-            this.comboBox1.Size = new System.Drawing.Size(124, 24);
-            this.comboBox1.TabIndex = 8;
-            // 
             // Form1
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(8F, 16F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(966, 536);
-            this.Controls.Add(this.comboBox1);
             this.Controls.Add(this.button2);
             this.Controls.Add(this.button1);
             this.Controls.Add(this.label3);
@@ -137,7 +125,6 @@
             this.Controls.Add(this.textBox1);
             this.Name = "Form1";
             this.Text = "Collision";
-            this.FormClosing += new System.Windows.Forms.FormClosingEventHandler(this.Form1_FormClosing);
             this.Load += new System.EventHandler(this.Form1_Load);
             this.ResumeLayout(false);
             this.PerformLayout();
@@ -154,7 +141,6 @@
         private System.Windows.Forms.Label label3;
         private System.Windows.Forms.Button button1;
         private System.Windows.Forms.Button button2;
-        private System.Windows.Forms.ComboBox comboBox1;
     }
 }
 

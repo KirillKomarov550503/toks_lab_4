@@ -11,25 +11,10 @@ namespace WindowsFormsApplication1
         {
             InitializeComponent();
         }
-        private void UpdatePortsInfo()
-        {
-            while (true)
-            {
-                string[] portNames = SerialPort.GetPortNames();
-                foreach (string name in portNames)
-                {
-                    this.Invoke((MethodInvoker)(delegate
-                    {
-                        if (!comboBox1.Items.Contains(name))
-                            comboBox1.Items.Add(name);
 
-                    }));
-                }
-                Thread.Sleep(5000);
-            }
-        }
-        private SerialPort serialPort;
-        private Thread thread;
+        private SerialPort portWriter;
+        private SerialPort portReader;
+
         private void Form1_Load(object sender, EventArgs e)
         {
             textBox1.ReadOnly = true;
@@ -39,9 +24,6 @@ namespace WindowsFormsApplication1
             textBox3.ScrollBars = ScrollBars.Vertical;
             button1.Text = "Connect";
             button2.Text = "Send";
-            thread = new Thread(UpdatePortsInfo);
-            thread.Start();
-
         }
 
         private void button1_Click(object sender, EventArgs e)
@@ -50,30 +32,36 @@ namespace WindowsFormsApplication1
             {
                 try
                 {
-                    serialPort = new SerialPort(comboBox1.SelectedItem.ToString(), 9600, Parity.None, 8);
-                    serialPort.Open();
-                    if (serialPort.IsOpen)
+                    String[] portNames = SerialPort.GetPortNames();
+                    if (portNames.Length > 0)
                     {
-                        textBox2.Text += "Connected to port " + comboBox1.SelectedItem.ToString() + "\r\n";
-                        serialPort.DataReceived += DataReceived;
-                        button1.Text = "Disconnect";
-                    }
-                    else
-                    {
-                        throw new Exception();
+                        portWriter = new SerialPort(portNames[0], 9600, Parity.None, 8);
+                        portReader = new SerialPort(portNames[1], 9600, Parity.None, 8);
+                        portWriter.Open();
+                        portReader.Open();
+                        if (portWriter.IsOpen && portReader.IsOpen)
+                        {
+                            textBox2.Text += "Successfull connection to COM ports" + "\r\n";
+                            button1.Text = "Disconnect";
+                        }
+                        else
+                        {
+                            throw new Exception();
+                        }
                     }
                 }
                 catch (Exception ex)
                 {
-                    textBox2.Text += "Problems with connection to port\r\n";
+                    textBox2.Text += "Problems with connection to ports" + "\r\n";
                 }
             }
             else
             {
                 try
                 {
-                    serialPort.Close();
-                    if (serialPort.IsOpen)
+                    portWriter.Close();
+                    portReader.Close();
+                    if (portWriter.IsOpen || portReader.IsOpen)
                     {
                         throw new Exception();
                     }
@@ -89,69 +77,6 @@ namespace WindowsFormsApplication1
             }
         }
 
-        private static string receivedMessage = "";
-        private static int collisionCount = 0;
-        private void DataReceived(object sender, SerialDataReceivedEventArgs e)
-        {
-            int size = serialPort.BytesToRead;
-            byte[] bytes = new byte[size];
-            serialPort.Read(bytes, 0, bytes.Length);
-            byte receiveByte  =0;
-            foreach (byte bt in bytes)
-            {
-                receiveByte = bt;
-            }
-            
-            if (receiveByte == 0x08)
-            {
-                collisionCount++;
-                this.Invoke((MethodInvoker)(delegate
-                {
-                    if (collisionCount == 1)
-                        textBox2.Text += "\r\n";
-                    textBox2.Text += "X";
-                }));
-                if (collisionCount == 10)
-                {
-                    receivedMessage = "";
-                    this.Invoke((MethodInvoker)(delegate
-                    {
-                        textBox2.Text += "Program received message with too much amount of collision\r\n";
-                        textBox2.Text += "_______________________________\r\n";
-                       
-                    }));
-                }
-
-            }
-            else if (receiveByte == 0x0A)
-            {
-                collisionCount = 0;
-                this.Invoke((MethodInvoker)(delegate
-                {
-                    textBox1.Text += receivedMessage + "\r\n";
-                    textBox2.Text += "___________________________\r\n";
-                    receivedMessage = "";
-                    
-                }));
-            }
-            else
-            {
-                collisionCount = 0;
-                string temp = Encoding.ASCII.GetString(new byte[] { receiveByte });
-                this.Invoke((MethodInvoker)(delegate
-                {
-                    receivedMessage += temp;
-                    textBox2.Text += "\r\n" + temp;
-                }));
-            }
-
-        }
-
-        private void Form1_FormClosing(object sender, FormClosingEventArgs e)
-        {
-            thread.Abort();
-        }
-
         private static bool Random()
         {
             return new Random().Next(11) > 4;
@@ -159,71 +84,85 @@ namespace WindowsFormsApplication1
 
         private static void Delay(int tryNumber)
         {
-            int times = tryNumber < 5 ? 30 : 10;
-            Thread.Sleep(new Random().Next((int)Math.Pow(2.0, (double)tryNumber)) * times);
-
+            Thread.Sleep(new Random().Next((int)Math.Pow(2.0, (double)tryNumber)));
         }
 
+        private void ReceiveData()
+        {
+            int size = portReader.BytesToRead;
+            byte[] bytes = new byte[size];
+            portReader.Read(bytes, 0, bytes.Length);
+            byte receiveByte = 0;
+            foreach (byte bt in bytes)
+            {
+                receiveByte = bt;
+            }
+            if (receiveByte != 0x08)
+            {
+                textBox1.Text += Encoding.ASCII.GetString(new byte[] { receiveByte }) + "\r\n";
+            }
+
+        }
         private void button2_Click(object sender, EventArgs e)
         {
-            if (textBox3.Text.Length > 0)
+            try
             {
-                if (serialPort.IsOpen)
+                if (textBox3.Text.Length > 0)
                 {
-                    if (Random())
+                    if (portWriter.IsOpen)
                     {
-                        textBox2.Text += "Channel is free" + "\r\n";
-                    }
-                    else
-                    {
-                        textBox2.Text += "Channel is busy" + "\r\n";
-                        Thread.Sleep(1000);
-                        textBox2.Text += "Channel is free" + "\r\n";
-                    }
-                    serialPort.RtsEnable = true;
-                    byte[] bytes = Encoding.ASCII.GetBytes(textBox3.Text);
-                    bool limit = false;
-                    foreach (byte bt in bytes)
-                    {
-                        for (int i = 0; i < 10; i++)
+                        textBox2.Text += "New message" + "\r\n";
+                        portWriter.RtsEnable = true;
+                        byte[] bytes = Encoding.ASCII.GetBytes(textBox3.Text);
+                        bool limit = false;
+                        foreach (byte bt in bytes)
                         {
                             if (Random())
                             {
-                                serialPort.Write(new byte[] { 0x08 }, 0, 1);
-                                textBox2.Text += "X";
-                                Delay(i);
+                                Thread.Sleep(50);
                             }
-                            else
-                            {
-                                if (i != 0)
-                                    textBox2.Text += "\r\n";
-                                break;
-                            }
-                            limit = i == 9;
-                        }
-                        if (!limit)
-                        {
+
                             byte[] temp = new byte[] { bt };
-                            textBox2.Text += Encoding.ASCII.GetString(temp) + "\r\n";
-                            serialPort.Write(temp, 0, 1);
-                            Thread.Sleep(50);
+                            textBox2.Text += "-";
+                            portWriter.Write(temp, 0, 1);
+                            Thread.Sleep(10);
+                            ReceiveData();
+                            int collisionCount = 0;
+                            for (; collisionCount < 10; collisionCount++)
+                            {
+                                if (Random())
+                                {
+                                    portWriter.Write(new byte[] { 0x08 }, 0, 1);
+                                    textBox2.Text += "X";
+                                    Delay(collisionCount);
+                                    ReceiveData();
+                                }
+                                else
+                                {
+                                    break;
+                                }
+                                limit = collisionCount == 9;
+                            }
+                            textBox2.Text += "\r\n";
+                            if (limit)
+                            {
+                                textBox2.Text += " Program try to send symbol \"" + Encoding.ASCII.GetString(new byte[] { bt }) + "\" 10 times\r\n";
+                                limit = false;
+                                return;
+                            }
+
                         }
-                        else
-                        {
-                            textBox2.Text += " Program try to send symbol \"" + Encoding.ASCII.GetString(new byte[] { bt }) + "\" 10 times\r\n";
-                            limit = false;
-                            return;
-                        }
+                        portWriter.RtsEnable = false;
                     }
-                    serialPort.Write(new byte[] { 0x0A }, 0, 1);
-                    Thread.Sleep(50);
-                    serialPort.RtsEnable = false;
                 }
                 else
-                    textBox2.Text += "You are not connected to any ports\r\n";
+                    textBox2.Text += "You are not input empty message\r\n";
             }
-            else
-                textBox2.Text += "You are not input message\r\n";
+            catch (Exception ex)
+            {
+
+                textBox2.Text += "You are not connected to any ports\r\n";
+            }
         }
 
     }
