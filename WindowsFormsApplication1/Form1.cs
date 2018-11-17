@@ -99,10 +99,14 @@ namespace WindowsFormsApplication1
             }
             if (receiveByte != 0x08)
             {
-                textBox1.Text += Encoding.ASCII.GetString(new byte[] { receiveByte }) + "\r\n";
+                receiveMessage += Encoding.ASCII.GetString(new byte[] { receiveByte });
+               
             }
 
         }
+
+        private string receiveMessage = "";
+       
         private void button2_Click(object sender, EventArgs e)
         {
             try
@@ -117,7 +121,7 @@ namespace WindowsFormsApplication1
                         bool limit = false;
                         foreach (byte bt in bytes)
                         {
-                            if (Random())
+                            while (Random())
                             {
                                 Thread.Sleep(50);
                             }
@@ -148,15 +152,18 @@ namespace WindowsFormsApplication1
                             {
                                 textBox2.Text += " Program try to send symbol \"" + Encoding.ASCII.GetString(new byte[] { bt }) + "\" 10 times\r\n";
                                 limit = false;
+                                receiveMessage = "";
                                 return;
                             }
 
                         }
                         portWriter.RtsEnable = false;
+                        textBox1.Text += receiveMessage + "\r\n";
+                        receiveMessage = "";
                     }
                 }
                 else
-                    textBox2.Text += "You are not input empty message\r\n";
+                    textBox2.Text += "You are input empty message\r\n";
             }
             catch (Exception ex)
             {
