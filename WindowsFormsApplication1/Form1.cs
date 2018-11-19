@@ -79,15 +79,15 @@ namespace WindowsFormsApplication1
 
         private static bool Random()
         {
-            return new Random().Next(11) > 4;
+            return new Random().Next(11) > 4; //генератор значений true или false с вероятностью 50%
         }
 
         private static void Delay(int tryNumber)
         {
-            Thread.Sleep(new Random().Next((int)Math.Pow(2.0, (double)tryNumber)));
+            Thread.Sleep(new Random().Next((int)Math.Pow(2.0, (double)tryNumber))); //задержка после возникновения коллизии. Формула взята из методы
         }
 
-        private void ReceiveData()
+        private void ReceiveData()//    чтение данных из порта
         {
             int size = portReader.BytesToRead;
             byte[] bytes = new byte[size];
@@ -97,7 +97,7 @@ namespace WindowsFormsApplication1
             {
                 receiveByte = bt;
             }
-            if (receiveByte != 0x08)
+            if (receiveByte != 0x08) // если не символ коллизии, то добавляем его к строке, которая будет выведена в поле Output 
             {
                 receiveMessage += Encoding.ASCII.GetString(new byte[] { receiveByte });
                
@@ -121,44 +121,44 @@ namespace WindowsFormsApplication1
                         bool limit = false;
                         foreach (byte bt in bytes)
                         {
-                            while (Random())
+                            while (Random()) // проверяем доступен ли канал. Если Random() равен true, значит канала занят и делаем задержку. И так до тех пор пока Random() не станет равен false, что значит, что канал свободен
                             {
                                 Thread.Sleep(50);
                             }
 
                             byte[] temp = new byte[] { bt };
-                            textBox2.Text += "-";
-                            portWriter.Write(temp, 0, 1);
+                            textBox2.Text += "-"; // в окно Debug вместо символа выводим символ "-"
+                            portWriter.Write(temp, 0, 1); // сам же байт сообщения пишем в канал
                             Thread.Sleep(10);
-                            ReceiveData();
-                            int collisionCount = 0;
+                            ReceiveData(); // Читаем записанный из канала символ. Очень важно сначала записать символ в канал, а потом генерировать коллизии
+                            int collisionCount = 0; // счетчик коллизий
                             for (; collisionCount < 10; collisionCount++)
                             {
-                                if (Random())
+                                if (Random()) // если true, значит возникла коллизия и нужно делать задержку.
                                 {
-                                    portWriter.Write(new byte[] { 0x08 }, 0, 1);
-                                    textBox2.Text += "X";
-                                    Delay(collisionCount);
+                                    portWriter.Write(new byte[] { 0x08 }, 0, 1); //пишем коллизию в канал
+                                    textBox2.Text += "X"; //выводим X окно Debug
+                                    Delay(collisionCount);// делаем задержку и в функцию передаем номер попытки. Так требует формула в методе
                                     ReceiveData();
                                 }
                                 else
                                 {
-                                    break;
+                                    break;// если коллизии не возникло, то прерываем цикл
                                 }
-                                limit = collisionCount == 9;
+                                limit = collisionCount == 9; // если количество коллизий равно 10
                             }
                             textBox2.Text += "\r\n";
-                            if (limit)
+                            if (limit)// если колличество коллизий стало равно 10, то значит сообщение испорчено и мы прекращаем пересылку сообщения
                             {
                                 textBox2.Text += " Program try to send symbol \"" + Encoding.ASCII.GetString(new byte[] { bt }) + "\" 10 times\r\n";
                                 limit = false;
-                                receiveMessage = "";
+                                receiveMessage = "";//очищаем полученное сообщение
                                 return;
                             }
 
                         }
                         portWriter.RtsEnable = false;
-                        textBox1.Text += receiveMessage + "\r\n";
+                        textBox1.Text += receiveMessage + "\r\n"; // если сообщение не было испорчено 10 коллизиями подряд для одного символа, то выводим в окно Output полученное сообщение
                         receiveMessage = "";
                     }
                 }
